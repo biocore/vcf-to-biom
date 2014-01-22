@@ -23,7 +23,7 @@ from numpy import array
 
 
 from vcf_to_biom import (process_data_entry_line, process_header_entry, 
-indiv_snp_variation, biom_data_from_vcfs, merge_otu_tables)
+indiv_snp_variation, create_biom_table)
 
 class ExampleTests(TestCase):
     """ Tests the generation of lists from vcf files. """
@@ -37,8 +37,7 @@ class ExampleTests(TestCase):
         self.example_file5 = example_file5
         self.example_file6 = example_file6
         self.example_file7 = example_file7
-        self.example_file8 = example_file8
-        self.example_file9 = example_file9
+
         
 ##Tests for process_data_entry_line
     def test_process_data_entry_line(self):
@@ -89,60 +88,49 @@ class ExampleTests(TestCase):
         expected = [[1, 0], [0, 0], [0, 0], [1, 1], [0, 0]]
         self.assertEqual(indiv_snp_variation(input), expected)
         
-#Test for biom_data_from_vcfs
-    def test_biom_data_from_vcfs(self):
+#Test for create_biom_table
+    def test_create_biom_table(self):
         """Does the function return the correct output when given the correct input?"""
-        vcf = list(biom_data_from_vcfs(self.example_file1))
+        vcf = list(create_biom_table(self.example_file1))
         expected = [array([[0, 0, 0, 0, 0]]), ['HG00096', 'HG00097', 'HG00099', 'HG00100', 'HG00101'], ['10:89623323'], None, [{'alleles': ('G', 'A'), 'rs': 'rs1044322'}]]
         self.assertEqual(vcf, expected)
  
-    def test_biom_data_from_vcfs_2(self):
+    def test_create_biom_table_2(self):
         """Does the function return the correct output when given the correct input?"""
-        vcf = list(biom_data_from_vcfs(self.example_file2))
+        vcf = list(create_biom_table(self.example_file2))
         expected = [array([[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]), ['HG00096', 'HG00097', 'HG00099', 'HG00100', 'HG00101', 'HG00102', 'HG00103', 'HG00104', 'HG00106', 'HG00108', 'HG00109', 'HG00110'], ['10:89674917', '10:89674997'], None, [{'alleles': ('T', 'G'), 'rs': 'rs182708158'}, {'alleles': ('A', 'G'), 'rs': 'rs116819638'}]]
         self.assertEqual(vcf, expected)
         
-    def test_biom_data_from_vcfs_3(self):
+    def test_create_biom_table_3(self):
         """Does the function return the correct output when given the correct input?"""
-        self.assertRaises(ValueError, biom_data_from_vcfs, self.example_file3)
+        self.assertRaises(ValueError, create_biom_table, self.example_file3)
         
-    def test_biom_data_from_vcfs_4(self):
+    def test_create_biom_table_4(self):
         """Does the function return the correct output when given the correct input?"""
-        vcf = list(biom_data_from_vcfs(self.example_file4))
+        vcf = list(create_biom_table(self.example_file4))
         expected = [array([[0, 0,],[0, 0,],[0, 0,],[0, 1]]), ['HG00096', 'HG00097'], ['10:89674917', '10:89674997', '10:89675036', '10:89675296' ], None, [{'alleles': ('T', 'G'), 'rs': 'rs182708158'}, {'alleles': ('A', 'G'), 'rs': 'rs116819638'}, {'alleles': ('C', 'T'), 'rs': 'rs111627758'}, {'alleles': ('A', 'G'), 'rs': 'rs1234224'}]]
         self.assertEqual(vcf, expected)
         
-    def test_biom_data_from_vcfs_5(self):
+    def test_create_biom_table_5(self):
         """Does the function return the correct output when given the correct input?"""
-        vcf = list(biom_data_from_vcfs(self.example_file5))
-        expected = [array([[2],[1],[1],[1],[1],[1]]), ['TNT028'], ['1:25611035', '1:25627613', '1:25627628', '1:25656531', '1:25656673', '1:25688901'], None, [{'alleles': ('G', 'C'), 'rs': 'rs2301153'}, {'alleles': ('C', 'A'), 'rs': '.'}, {'alleles': ('A', 'C'), 'rs': '.'}, {'alleles': ('T', 'C'), 'rs': '.'}, {'alleles': ('C', 'T'), 'rs': 'rs667179'}, {'alleles': ('T', 'G'), 'rs': '.'}]]
+        vcf = list(create_biom_table(self.example_file5))
+        expected = [array([[2],[1],[1],[1],[1],[1],[1]]), ['TNT028'], ['1:25611035', '1:25627613', '1:25627627', '1:25627628', '1:25656531', '1:25656673', '1:25688901'], None, [{'alleles': ('G', 'C'), 'rs': 'rs2301153'}, {'alleles': ('C', 'A'), 'rs': '.'}, {'alleles': ('C', 'CG'), 'rs': '.'}, {'alleles': ('A', 'C'), 'rs': '.'}, {'alleles': ('T', 'C'), 'rs': '.'}, {'alleles': ('C', 'T'), 'rs': 'rs667179'}, {'alleles': ('T', 'G'), 'rs': '.'}]]
         self.assertEqual(vcf, expected)
     
-    def test_biom_data_from_vcfs_6(self):
+    def test_create_biom_table_6(self):
         """Does the function return the correct output when given the correct input?"""
-        vcf = list(biom_data_from_vcfs(self.example_file6))
+        vcf = list(create_biom_table(self.example_file6))
         expected = [array([[0], [0], [0], [0]]), ['vac6wt'], ['NC_007779.1:10098', 'NC_007779.1:10099', 'NC_007779.1:10100', 'NC_007779.1:10101'], None, [{'alleles': ('C', '.'), 'rs': '.'}, {'alleles': ('G', '.'), 'rs': '.'}, {'alleles': ('G', '.'), 'rs': '.'}, {'alleles': ('T', '.'), 'rs': '.'}]]
         self.assertEqual(vcf, expected)
         
-    def test_biom_data_from_vcfs_7(self):
+    def test_create_biom_table_7(self):
         """Does the function return the correct output when given the correct input?"""
-        vcf = list(biom_data_from_vcfs(self.example_file7))
-        expected = [array([[0, 0], [0, 0], [0, 1]]), ['vac7wt', 'vac8wt'], ['NC_007779.1:10098', 'NC_007779.1:10099', 'NC_007779.1:10100'], None, [{'alleles': ('C', 'T'), 'rs': '.'}, {'alleles': ('G', '.'), 'rs': '.'}, {'alleles': ('G', 'A'), 'rs': '.'}]]
+        vcf = list(create_biom_table(self.example_file7))
+        expected = [array([[0, 0], [0, 0], [0, 1]]), ['vac6wt', 'vac7wt'], ['NC_007779.1:10098', 'NC_007779.1:10099', 'NC_007779.1:10100'], None, [{'alleles': ('C', 'T'), 'rs': '.'}, {'alleles': ('G', '.'), 'rs': '.'}, {'alleles': ('G', 'A'), 'rs': '.'}]]
         self.assertEqual(vcf, expected)
         
-    def test_biom_data_from_vcfs_8(self):
-        """Does the function return the correct output when given the correct input?"""
-        vcf = list(biom_data_from_vcfs(self.example_file8))
-        expected = [array([[1], [1], [2], [2], [2]]), ['ALO066'], ['chr1:43424812', 'chr1:158580428', 'chr1:158580759', 'chr1:158582646', 'chr1:158584091'], 
-        None, [{'alleles': ('C', 'G'), 'rs': 'rs3754226'}, {'alleles': ('A', 'C'), 'rs': 'rs75855672'}, {'alleles': ('G', 'A'), 'rs': 'rs12601'}, {'alleles': ('T', 'C'), 'rs': 'rs2251969'}, {'alleles': ('A', 'G'), 'rs': 'rs952094'}]]
-        self.assertEqual(vcf, expected)
         
-    def test_biom_data_from_vcfs_9(self):
-        vcf = list(biom_data_from_vcfs([self.example_file9]))
-        expected = [array([[1]]), ['ALO066'], ['chr4:144801728'], None, [{'alleles': ('C', 'T'), 'rs': '.'}]]
-        self.assertEqual(vcf, expected)
-
 example_file1 = """##fileformat=VCFv4.0													
 ##source=BCM:SNPTools:hapfuse													
 ##reference=1000Genomes-NCBI37													
@@ -208,7 +196,7 @@ NC_007779.1	10100	.	G	.	68	.	AN=1;DP=1;MQ=60.00;MQ0=0	GT:DP:MLPSAC:MLPSAF	0:01
 NC_007779.1	10101	.	T	.	63	.	AN=1;DP=1;MQ=60.00;MQ0=0	GT:DP:MLPSAC:MLPSAF	0:01""".split('\n')
 
 example_file7 = """##reference=file:///home/jsahl/wgfast/Ecoli/run_subsample/scratch/reference.fasta										
-#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	vac7wt	vac8wt
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	vac6wt	vac7wt
 INFO  13:50:05,918 SAMDataSource$SAMReaders - Initializing SAMRecords in serial 										
 INFO  13:50:05,920 SAMDataSource$SAMReaders - Done initializing BAM readers: total time 0.00 										
 INFO  13:50:06,000 AFCalcFactory - Requested ploidy 1 maxAltAlleles 6 not supported by requested model EXACT_INDEPENDENT looking for an option 										
@@ -219,24 +207,7 @@ NC_007779.1	10098	.	C	T	68	.	AN=1;DP=1;MQ=60.00;MQ0=0	GT:DP:MLPSAC:MLPSAF	0:01	0
 NC_007779.1	10099	.	G	.	65	.	AN=1;DP=1;MQ=60.00;MQ0=0	GT:DP:MLPSAC:MLPSAF	0:01	.
 NC_007779.1	10100	.	G	A	68	.	AN=1;DP=1;MQ=60.00;MQ0=0	GT:DP:MLPSAC:MLPSAF	0:01	1:01""".split('\n')
 
-example_file8 = """##contig=<ID=chrM,length=16571>									
-##contig=<ID=chrX,length=155270560>									
-##contig=<ID=chrY,length=59373566>									
-##reference=file://E:\Genomes\Homo_sapiens\UCSC\hg19\Sequence\WholeGenomeFASTA\genome.fa									
-##source=GATK 1.6									
-#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	ALO066
-chr1	43424812	rs3754226	C	G	223.01	PASS	AC=1;AF=0.5;AN=2;DP=42;QD=5.31;TI=NM_006516,NR_033967;GI=SLC2A1,FLJ32224;FC=Silent,Silent;EXON	GT:AD:DP:GQ:PL:VF:GQX	0/1:28,14:42:99:253,0,522:0.333:99
-chr1	158580428	rs75855672	A	C	3690.01	PASS	AC=1;AF=0.5;AN=2;DP=327;QD=11.28	GT:AD:DP:GQ:PL:VF:GQX	0/1:142,185:327:99:3690,0,2733:0.566:99
-chr1	158580759	rs12601	G	A	3802.01	PASS	AC=2;AF=1.0;AN=2;DP=169;QD=22.50;TI=NM_003126;GI=SPTA1;FC=Silent;EXON	GT:AD:DP:GQ:PL:VF:GQX	1/1:0,169:169:99:3802,256,0:1.000:99
-chr1	158582646	rs2251969	T	C	4168.01	PASS	AC=2;AF=1.0;AN=2;DP=185;QD=22.53;TI=NM_003126;GI=SPTA1;FC=Synonymous_A2365A;EXON	GT:AD:DP:GQ:PL:VF:GQX	1/1:0,185:185:99:4168,283,0:1.000:99
-chr1	158584091	rs952094	A	G	3065	PASS	AC=2;AF=1.0;AN=2;DP=131;QD=23.40;TI=NM_003126;GI=SPTA1;FC=Missense_I2265T;EXON	GT:AD:DP:GQ:PL:VF:GQX	1/1:0,131:131:99:3098,214,0:1.000:99
-chr1	158584103	rs5778083	G	GAA,GA	2093.94	R8	AC=1,1;AF=0.5,0.5;AN=2;DP=116;QD=18.05;TI=NM_003126;GI=SPTA1;FC=Noncoding	GT:AD:DP:GQ:PL:VF:GQX	1/2:33,56,27:131:83.92:2172,84,546,1015,0,1221:0.716:83""".split('\n')
-
-example_file9 = """##source=GATK 1.6									
-#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	ALO066
-chr4	144801662	rs28721877;rs71620737	C	G,T	4057.01	PASS	AC=1,1;AF=0.5,0.5;AN=2;DP=121;QD=33.53;TI=NM_198682,NM_002102;GI=GYPE,GYPE;FC=Unknown_13,Unknown_13;EXON	GT:AD:DP:GQ:PL:VF:GQX	1/2:2,47,72:121:99:4057,2519,2398,1538,0,1339:0.983:99
-chr4	144801728	.	C	T	805.01	PASS	AC=1;AF=0.5;AN=2;DP=63;QD=12.78;TI=NM_198682,NM_002102;GI=GYPE,GYPE;FC=Silent,Silent	GT:AD:DP:GQ:PL:VF:GQX	0/1:37,26:63:99:835,0,1232:0.413:99""".split('\n')
 
 if __name__ == "__main__":
     main()
-                            
+    
