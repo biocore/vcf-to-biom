@@ -49,6 +49,7 @@ def indiv_snp_variation(line):
  
 def create_biom_table(f):
     sample_ids = None
+    valid_observation_ids = set()
     observation_ids = []
     observation_md = []
     data = []
@@ -76,9 +77,10 @@ def create_biom_table(f):
                     pass
                 else: 
                     observation_id = "%s:%s" %(chr_n, pos_n)
-                    if observation_id in observation_ids:
+                    if observation_id in valid_observation_ids:
                         pass
-                    else:    
+                    else:
+                        valid_observation_ids.add(observation_id)   
                         observation_ids.append(observation_id)
                         meta_dic = {"alleles":(ref, alt),"rs":rs_n}
                         observation_md.append(meta_dic)
