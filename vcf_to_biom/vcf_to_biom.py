@@ -17,94 +17,71 @@ from numpy import array
 import os
 import gzip
 
-def process_data_entry_line(line, ids):
+def process_data_entry_line(line):
     fields = line.split('\t') 
     chr_n = fields[0] 
     pos_n = fields[1]
     rs_n = fields[2]
     ref = fields[3] 
     alt = fields[4]
-    indiv_ids = zip(ids, indiv_snp_variation(line))
-    return (chr_n, pos_n, rs_n, ref, alt, indiv_ids)
+    genotypes = fields[9:]
+    return (chr_n, pos_n, rs_n, ref, alt, genotypes)
+    
+def process_genotype_data(data, genotypes, observation_id_index):
+    sample_id_index = 0
+    for genotype in genotypes:
+        try:
+            genotype = map(int,genotype.split(':')[0].split('|'))
+        except ValueError:
+            genotype = map(int,genotype.split(':')[0].split('/'))
+        if genotype == [0, 0]:
+            pass
+        elif genotype == [0, 1]:
+            data[(observation_id_index, sample_id_index)] = 1
+        elif genotype == [1, 0]:
+            data[(observation_id_index, sample_id_index)] = 1
+        elif genotype == [1, 1]:
+            data[(observation_id_index, sample_id_index)] = 2
+        else:
+            raise ValueError("Can't handle genotype %s (sample id: %s, observation id: %s)" % 
+                             (genotype, sample_id_index, observation_id_index))
+        sample_id_index += 1
+    return data
 
-#process the information line. This line contains all of the information about the individuals. 
-#The function returns a list of the individuals 
-def process_header_entry(line):
-    fields = line.split() 
-    return fields [9:]
-
-#Creates a list of allelic variation for each SNP. The list itself contains one entry of two numbers for each individual. 
-def indiv_snp_variation(line): 
-    genotypes = line.split('\t')[9:]
-    formatted_genotypes = [] 
-    for i in genotypes:
-        try: 
-            formatted_genotypes.append(map(int,i.split(':')[0].split('|')))
-        except:
-            try:
-                formatted_genotypes.append(map(int,i.split(':')[0].split('/')))
-            except:
-                formatted_genotypes.append([0])
-    return formatted_genotypes
- 
-def create_biom_table(f):
-    sample_ids = None
-    valid_observation_ids = set()
-    observation_ids = []
-    observation_md = []
-    data = []
-    sample_md = None
-    for line in f:
+def create_table_factory_objects(vcf_file):
+    ordered_observations_ids = []
+    observations_ids = {}
+    master_observation_ids = set([])
+    data = {}
+    for line in vcf_file:
         if line.startswith('##'):
             pass
         elif line.startswith('INFO'):
             pass
         elif line.startswith('#CHROM'): 
-            sample_ids = process_header_entry(line)
-            sample_md = None
+            ordered_sample_ids = line.split('\t')[9:] 
         else:
-            if sample_ids == None:
-                raise ValueError, "Didn't find '#CHROM' line before data lines. Can't continue."
-            else: 
-                chr_n, pos_n, rs_n, ref, alt, indiv_ids = \
-                process_data_entry_line(line, sample_ids)
-                for i in ref.split(','):
-                    if len(i) > 1: 
-                        check = True
-                    else: 
-                        check = False
-                if check == True:
-                    pass
-                else: 
-                    observation_id = "%s:%s" %(chr_n, pos_n)
-                    if observation_id in valid_observation_ids:
-                        pass
-                    else:
-                        valid_observation_ids.add(observation_id)   
-                        observation_ids.append(observation_id)
-                        meta_dic = {"alleles":(ref, alt),"rs":rs_n}
-                        observation_md.append(meta_dic)
-                        data_row = []
-                        for indiv, variation in indiv_ids:
-                            if len(variation) == 2:
-                                if variation == [0, 0]:
-                                    data_row.append(0)
-                                elif variation == [0, 1]:
-                                    data_row.append(1)
-                                elif variation == [1, 0]: 
-                                    data_row.append(1)                        
-                                elif variation == [1, 1]:
-                                    data_row.append(2)
-                            else:
-                                data_row.append(variation[0])
-                        data.append(data_row)
-    if len(data) == 0:
-        raise ValueError, """No valid SNP data was present in the file. Indels will be 
-ignored"""
-    else: 
-        data = array(data)
-    return data, sample_ids, observation_ids, sample_md, observation_md
-    
+            chr_n, pos_n, rs_n, ref, alt, genotypes = process_data_entry_line(line)
+            observation_id = chr_n + ':' + pos_n
+            if observation_id in master_observation_ids or len(ref) > 1 or len(alt) > 1:
+                pass
+            else:
+                master_observation_ids.add(observation_id)
+                ordered_observations_ids.append(observation_id)
+                observation_id_index = len(ordered_observations_ids) - 1
+                data = process_genotype_data(data, genotypes, observation_id_index)
+    if len(ordered_observations_ids) == 0:
+        raise ValueError, "No valid SNP data was found, check VCF file."
+    try:
+        data[(observation_id_index, (len(ordered_sample_ids) - 1))]
+    except KeyError:
+        data[(observation_id_index, (len(ordered_sample_ids) - 1))] = 0
+    return data, ordered_observations_ids, ordered_sample_ids
+
+# data = {(0, 0): 1, (0, 1): 1, (1, 0): 1, (1, 1):0}
+# oids = ['10.89673612', '10.89673554']
+# #sids = [sample1, sample2]
+
 def create_biom_file(vcf_fp, output_fp, mapping_fp=None, zip=None):
     if vcf_fp.endswith('gz'):
         vcf_f = gzip.open(vcf_fp)
@@ -113,15 +90,13 @@ def create_biom_file(vcf_fp, output_fp, mapping_fp=None, zip=None):
     else:
         raise ValueError, "Invalid file format or extension, only '.vcf' or '.vcf.gz' are\
 accepted"
-    data, sample_ids, observation_ids, sample_md, observation_md =\
-    create_biom_table(vcf_f)
+    data, observation_ids, sample_ids =\
+    create_table_factory_objects(vcf_f)
+#     print data
+#     print len(observation_ids)
+#     print len(sample_ids)
     sample_md = None
-    biom_table = table_factory(data, 
-                              sample_ids, 
-                              observation_ids,
-                              sample_md, 
-                              observation_md,
-                              constructor=SparseOTUTable)
+    table = table_factory(data, sample_ids=sample_ids, observation_ids=observation_ids, constructor=SparseOTUTable)
     if mapping_fp != None:
         mapping_f = MetadataMap.fromFile(mapping_fp)
         biom_table.addSampleMetadata(mapping_f)
@@ -129,7 +104,7 @@ accepted"
         output_f = gzip.open('%s.%s' % (output_fp, zip), 'wb')
     else:
         output_f = open(output_fp, 'w')
-    biom_table.getBiomFormatJsonString(generatedby(), direct_io=output_f)
+    table.getBiomFormatJsonString(generatedby(), direct_io=output_f)
     output_f.close()
     
 
