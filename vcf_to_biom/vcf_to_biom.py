@@ -18,19 +18,25 @@ import os
 import gzip
 
 def process_data_entry_line(line):
+    '''Takes a data line from a vcf file and returns the different data types as a list'''
     fields = line.split('\t') 
     chr_n = fields[0] 
     pos_n = fields[1]
     rs_n = fields[2]
     ref = fields[3] 
     alt = fields[4]
+    #genotypes still contains all of the data about the SNP call including quality 
+    #information
     genotypes = fields[9:]
     return (chr_n, pos_n, rs_n, ref, alt, genotypes)
     
 def process_genotype_data(data, genotypes, observation_id_index):
+    '''Takes a dictionary, empty or not, and returns a dictionary. The key the coordinates
+    of observation and sample id and the value is a 1, 2, or 3'''
     sample_id_index = 0
     for genotype in genotypes:
         try:
+            #This parses the data so that only the genotype information is left
             genotype = map(int,genotype.split(':')[0].split('|'))
         except ValueError:
             genotype = map(int,genotype.split(':')[0].split('/'))
@@ -59,7 +65,7 @@ def create_table_factory_objects(vcf_file):
         elif line.startswith('INFO'):
             pass
         elif line.startswith('#CHROM'): 
-            ordered_sample_ids = line.split('\t')[9:] 
+            ordered_sample_ids = line.strip().split('\t')[9:] 
         else:
             chr_n, pos_n, rs_n, ref, alt, genotypes = process_data_entry_line(line)
             observation_id = chr_n + ':' + pos_n
@@ -92,9 +98,6 @@ def create_biom_file(vcf_fp, output_fp, mapping_fp=None, zip=None):
 accepted"
     data, observation_ids, sample_ids =\
     create_table_factory_objects(vcf_f)
-#     print data
-#     print len(observation_ids)
-#     print len(sample_ids)
     sample_md = None
     table = table_factory(data, sample_ids=sample_ids, observation_ids=observation_ids, constructor=SparseOTUTable)
     if mapping_fp != None:
