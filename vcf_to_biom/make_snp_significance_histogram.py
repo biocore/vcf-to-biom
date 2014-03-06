@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.mlab as mlab
 import matplotlib.pyplot as plt
 import pylab as P
+from math import log
 
 def get_observation_significances(file, x_col, y_col):
     '''take the significances file and return a dictionary of all ids and p_values for
@@ -83,16 +84,45 @@ def get_observation_ratios(file, bin_size, x_col=0, y_col=1, alpha=.05, snps=Tru
             result[bin] = 1 
     return result, bins
 
+def get_all_probs(file):
+    probs = []
+    for line in file:
+        if line.startswith('OTU'):
+            pass
+        else:
+            prob = float(line.split('\t')[2])
+            probs.append(prob)
+    return probs
+        
         
 def main():
 
-    file = open('/Users/jc33/Dropbox/caporaso_lab/vcf_to_biom/biom_analysis/out_sig_22.txt', 'U')
-    bin_size = 10000
-    alpha = .05
+    file = open('/Users/jc33/Dropbox/caporaso_lab/vcf_to_biom/biom_analysis/otu_cat_sig/out_sig_22.txt', 'U')
     
+    alpha = .05
+    probs = get_all_probs(file)
+#     
+#     c = 0
+#     for prob in probs:
+#         if prob <= alpha:
+#             c += 1
+#     expected = len(probs) * alpha
+#     actual = c
+#     
+#     sigma = np.std(probs)
+#     mu = np.mean(probs)
+#     probs = map(abs, map(log, probs))
+#     
+#     num_bins = 1000
+#     n, bins, patches = plt.hist(probs, num_bins, normed=1, facecolor='green')
+#     y = mlab.normpdf(bins, mu, sigma)
+#     plt.plot(bins, y, 'r--')
+#     P.xlabel('Log Transformed P-Values')
+    bin_size = 1000
+     
     bined_data, bins1 = get_observation_ratios(file, bin_size, alpha=alpha)
     P.hist(bined_data.keys(), weights=bined_data.values(), bins=bins1)
-    P.plot([1e7, 5.3e7], [1, 1], 'k-', lw=2, color='red')
+    P.plot([1, 8.5e7], [1, 1], 'k-', lw=2, color='red')
     P.xlabel('Genome Location')
     P.ylabel('P_value Ratio')
     P.show()
